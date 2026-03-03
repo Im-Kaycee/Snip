@@ -23,12 +23,12 @@ This project is meant as a learning tool to explore backend concepts like databa
 
 ## Tech Stack
 
-| Tool | Purpose |
-|------|---------|
-| **FastAPI** | Backend API framework |
-| **SQLite** | Lightweight database for storage |
-| **Redis** | Caching and rate-limiting |
-| **SQLModel** | ORM for SQLite |
+| Tool         | Purpose                           |
+| ------------ | --------------------------------- |
+| **FastAPI**  | Backend API framework             |
+| **SQLite**   | Lightweight database for storage  |
+| **Redis**    | Caching and rate-limiting         |
+| **SQLModel** | ORM for SQLite                    |
 | **Pydantic** | Data validation and serialization |
 
 ---
@@ -58,6 +58,12 @@ pip install -r requirements.txt
 redis-server
 ```
 
+NB: Run
+
+```bash
+python3 db_init.py to initialize the database
+```
+
 4. Run the FastAPI app:
 
 ```bash
@@ -74,12 +80,12 @@ http://localhost:8000/docs
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/shorten` | Create a shortened URL (expects JSON body) |
-| `GET` | `/api/{short_code}` | Redirect to the original URL |
-| `GET` | `/api/urls` | Fetch all URLs with their short codes |
-| `GET` | `/api/stats/{short_code}` | Fetch statistics for a given short code |
+| Method | Endpoint                  | Description                                |
+| ------ | ------------------------- | ------------------------------------------ |
+| `POST` | `/api/shorten`            | Create a shortened URL (expects JSON body) |
+| `GET`  | `/api/{short_code}`       | Redirect to the original URL               |
+| `GET`  | `/api/urls`               | Fetch all URLs with their short codes      |
+| `GET`  | `/api/stats/{short_code}` | Fetch statistics for a given short code    |
 
 ---
 
