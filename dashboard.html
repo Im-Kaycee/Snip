@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>snip. — URL Shortener</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'DM Mono', monospace; background: #060a18; }
+    .syne { font-family: 'Syne', sans-serif; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .slide-up { animation: slideUp .2s ease forwards; }
+    .fade-in { animation: fadeIn .15s ease forwards; }
+    .dot-pulse { animation: pulse 2s infinite; }
+    input:focus { outline: none; border-color: rgba(34,211,165,.5) !important; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 border-b border-white/5 backdrop-blur-md bg-[#060a18]/90">
+    <div class="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base" style="background:linear-gradient(135deg,#22d3a5,#3b82f6)">⚡</div>
+        <span class="syne font-extrabold text-lg tracking-tight">snip.</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-12 pb-24">
+
+    <!-- Hero -->
+    <div class="mb-10">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="h-px w-6" style="background:linear-gradient(90deg,#22d3a5,transparent)"></div>
+        <span class="text-[10px] tracking-widest text-slate-600 uppercase">URL Shortener</span>
+      </div>
+      <h1 class="syne font-extrabold text-5xl leading-tight tracking-tight">
+        Make links<br><span style="color:#22d3a5">disappear.</span>
+      </h1>
+    </div>
+
+    <!-- Shorten Card -->
+    <div class="rounded-2xl p-7 mb-10 border border-white/[.07]" style="background:rgba(255,255,255,.025)">
+      <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-4">Paste a URL</p>
+      <div class="flex gap-3 flex-wrap">
+        <input id="urlInput" type="text" placeholder="https://your-very-long-url.com/goes/here"
+          class="flex-1 min-w-0 rounded-xl px-4 py-3 text-sm border text-slate-100 placeholder-slate-700"
+          style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.09);transition:border-color .2s"
+          onkeydown="if(event.key==='Enter')shortenUrl()" />
+        <button onclick="shortenUrl()" id="shortenBtn"
+          class="rounded-xl px-6 py-3 text-xs font-medium tracking-widest transition-all duration-200 hover:-translate-y-px active:translate-y-0"
+          style="background:#22d3a5;color:#060a18">
+          SHORTEN →
+        </button>
+      </div>
+
+      <!-- Error -->
+      <p id="shortenError" class="hidden mt-3 text-xs text-red-400"></p>
+
+      <!-- Result -->
+      <div id="shortenResult" class="hidden mt-5 rounded-xl p-5 border" style="background:rgba(34,211,165,.05);border-color:rgba(34,211,165,.18)">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-[10px] tracking-widest" style="color:#22d3a5">✓ SHORTENED</p>
+          <button onclick="document.getElementById('shortenResult').classList.add('hidden')"
+            class="text-[10px] tracking-widest px-2.5 py-1 rounded-lg border"
+            style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:#4a5568;cursor:pointer">✕ CLOSE</button>
+        </div>
+        <div class="grid grid-cols-2 gap-5">
+          <div>
+            <p class="text-[10px] text-slate-600 tracking-widest mb-1.5">ORIGINAL</p>
+            <p id="resultOriginal" class="text-xs text-slate-500 break-all leading-relaxed"></p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-600 tracking-widest mb-1.5">SHORT URL</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="resultShort" class="text-sm font-medium" style="color:#22d3a5"></span>
+              <button id="resultCopyBtn" onclick="copyText('resultShort', 'resultCopyBtn')"
+                class="text-[10px] tracking-widest px-2.5 py-1 rounded-lg border transition-all"
+                style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#718096">COPY</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Links Table -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="h-px w-5" style="background:linear-gradient(90deg,#22d3a5,transparent)"></div>
+          <span class="text-[10px] tracking-widest text-slate-600 uppercase">All Links</span>
+          <span id="urlCount" class="text-[10px] font-medium px-2.5 py-0.5 rounded-full border" style="color:#22d3a5;border-color:rgba(34,211,165,.2);background:rgba(34,211,165,.08)">0</span>
+        </div>
+        <button onclick="fetchUrls()" class="text-[10px] tracking-widest px-3 py-1.5 rounded-lg border transition-colors hover:border-white/20"
+          style="background:transparent;border-color:rgba(255,255,255,.08);color:#4a5568">↻ REFRESH</button>
+      </div>
+
+      <div class="rounded-2xl border overflow-hidden" style="background:rgba(255,255,255,.015);border-color:rgba(255,255,255,.07)">
+        <!-- Column headers -->
+        <div class="grid gap-4 px-6 py-3.5 border-b text-[10px] tracking-widest text-slate-700 uppercase" style="grid-template-columns:1fr 1fr auto;border-color:rgba(255,255,255,.06)">
+          <span>Original URL</span>
+          <span>Short URL</span>
+          <span>Actions</span>
+        </div>
+
+        <div id="urlsBody">
+          <div class="px-6 py-10 text-center text-xs text-slate-700">Loading links…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Stats Modal -->
+  <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center fade-in" style="background:rgba(4,7,20,.82);backdrop-filter:blur(8px)">
+    <div class="relative w-full max-w-md mx-4 rounded-2xl p-8 border slide-up" style="background:#0d1226;border-color:rgba(255,255,255,.1);box-shadow:0 40px 80px rgba(0,0,0,.6)">
+      <div class="flex justify-between items-start mb-7">
+        <div>
+          <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-1.5">Stats for</p>
+          <h2 id="modalCode" class="syne font-extrabold text-xl"></h2>
+        </div>
+        <button onclick="closeModal()" class="w-9 h-9 rounded-xl flex items-center justify-center text-lg border transition-colors hover:border-white/20"
+          style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08);color:#6b7280">×</button>
+      </div>
+      <div id="modalBody" class="text-xs text-slate-600">Loading…</div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:8000/api';
+
+    // --- Shorten ---
+    async function shortenUrl() {
+      const input = document.getElementById('urlInput');
+      const btn = document.getElementById('shortenBtn');
+      const errEl = document.getElementById('shortenError');
+      const resultEl = document.getElementById('shortenResult');
+      const url = input.value.trim();
+      if (!url) return;
+
+      btn.textContent = 'WORKING…';
+      btn.style.background = '#1a2a25';
+      btn.style.color = '#4a5568';
+      errEl.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API}/shorten`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ original_url: url })
+        });
+        if (!res.ok) throw new Error('Invalid URL or server error');
+        const data = await res.json();
+
+        document.getElementById('resultOriginal').textContent = data.original_url.length > 60
+          ? data.original_url.slice(0, 60) + '…' : data.original_url;
+        document.getElementById('resultShort').textContent = data.short_url;
+        resultEl.classList.remove('hidden');
+        fetchUrls(); // refresh table in background — does not touch resultEl
+      } catch (e) {
+        errEl.textContent = '✕ ' + e.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'SHORTEN →';
+        btn.style.background = '#22d3a5';
+        btn.style.color = '#060a18';
+      }
+    }
+
+    // --- Copy ---
+    function copyText(spanId, btnId) {
+      const text = document.getElementById(spanId).textContent;
+      navigator.clipboard.writeText(text);
+      const btn = document.getElementById(btnId);
+      const orig = btn.textContent;
+      btn.textContent = 'COPIED';
+      btn.style.background = '#22d3a5';
+      btn.style.borderColor = '#22d3a5';
+      btn.style.color = '#060a18';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = 'rgba(255,255,255,.06)';
+        btn.style.borderColor = 'rgba(255,255,255,.1)';
+        btn.style.color = '#718096';
+      }, 1800);
+    }
+
+    function copyDirect(text, btn) {
+      navigator.clipboard.writeText(text);
+      const orig = btn.textContent;
+      btn.textContent = 'COPIED';
+      btn.style.background = '#22d3a5';
+      btn.style.borderColor = '#22d3a5';
+      btn.style.color = '#060a18';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = 'rgba(255,255,255,.06)';
+        btn.style.borderColor = 'rgba(255,255,255,.1)';
+        btn.style.color = '#718096';
+      }, 1800);
+    }
+
+    // --- Fetch all URLs ---
+    async function fetchUrls() {
+      const body = document.getElementById('urlsBody');
+      try {
+        const res = await fetch(`${API}/urls`);
+        const urls = await res.json();
+        document.getElementById('urlCount').textContent = urls.length;
+
+        if (!urls.length) {
+          body.innerHTML = `<div class="px-6 py-12 text-center text-xs text-slate-700">No links yet. Shorten your first URL above.</div>`;
+          return;
+        }
+
+        body.innerHTML = urls.map((u, i) => {
+          const code = u.short_url.split('/').pop();
+          const orig = u.original_url.length > 45 ? u.original_url.slice(0, 45) + '…' : u.original_url;
+          const short = u.short_url.length > 38 ? u.short_url.slice(0, 38) + '…' : u.short_url;
+          const border = i < urls.length - 1 ? 'border-b border-white/[.04]' : '';
+          return `
+            <div class="grid gap-4 px-6 py-4 items-center transition-colors hover:bg-white/[.025] ${border}"
+              style="grid-template-columns:1fr 1fr auto">
+              <span class="text-xs text-slate-500 truncate pr-2">${orig}</span>
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xs truncate" style="color:#22d3a5">${short}</span>
+                <button onclick="copyDirect('${u.short_url}', this)"
+                  class="shrink-0 text-[10px] tracking-wider px-2.5 py-1 rounded-lg border transition-all"
+                  style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#718096">COPY</button>
+              </div>
+              <button onclick="openStats('${code}')"
+                class="text-[10px] tracking-wider px-3 py-1.5 rounded-lg border transition-all hover:border-white/20 whitespace-nowrap"
+                style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08);color:#a0aec0">STATS →</button>
+            </div>`;
+        }).join('');
+      } catch {
+        body.innerHTML = `<div class="px-6 py-10 text-center text-xs text-red-400">Could not reach API.</div>`;
+      }
+    }
+
+    // --- Stats Modal ---
+    async function openStats(code) {
+      document.getElementById('modalCode').textContent = '/' + code;
+      document.getElementById('modalBody').innerHTML = '<p class="text-xs text-slate-600">Loading…</p>';
+      document.getElementById('modal').classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API}/stats/${code}`);
+        if (!res.ok) throw new Error('Not found');
+        const s = await res.json();
+
+        const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+
+        document.getElementById('modalBody').innerHTML = `
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="rounded-xl p-4 border" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+              <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-2">Clicks</p>
+              <p class="syne font-extrabold text-3xl" style="color:#22d3a5">${s.click_count}</p>
+            </div>
+            <div class="rounded-xl p-4 border" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+              <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-2">Created</p>
+              <p class="syne font-extrabold text-xl text-slate-100">${fmt(s.created_at)}</p>
+            </div>
+          </div>
+          <div class="rounded-xl p-4 border mb-3" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+            <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-2">Original URL</p>
+            <p class="text-xs text-slate-400 break-all leading-relaxed">${s.original_url}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl p-4 border" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+              <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-2">Expires</p>
+              <p class="text-xs text-slate-400">${fmt(s.expires_at)}</p>
+            </div>
+            <div class="rounded-xl p-4 border" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+              <p class="text-[10px] tracking-widest text-slate-600 uppercase mb-2">Short Code</p>
+              <p class="text-xs" style="color:#22d3a5">${s.short_code}</p>
+            </div>
+          </div>`;
+      } catch (e) {
+        document.getElementById('modalBody').innerHTML = `<p class="text-xs text-red-400">Error: ${e.message}</p>`;
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Init
+    fetchUrls();
+  </script>
+</body>
+</html>
